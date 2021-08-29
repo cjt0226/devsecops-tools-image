@@ -37,7 +37,8 @@ pipeline {
                 script {
                     def image = docker.build("$TOOLS_IMAGE")
                     // Make sure that the user ID exists within the container
-                    image.inside("--volume /etc/passwd:/etc/passwd:ro") {
+//                     image.inside("--volume /etc/passwd:/etc/passwd:ro") { //map jenkins(1000) user to container
+                    image.inside() {
                         sh label: "Test anchore-cli",
                             script: "anchore-cli --version"
                         sh label: "Test curl",
@@ -46,12 +47,12 @@ pipeline {
                             script: "detect-secrets --version"
                         sh label: "Test nikto.pl",
                             script: "nikto.pl -Version"
-                        sh label: "Test for outdated global npm packages",
-                            script: "npm outdated --global"
-                        sh label: "Test sonar-scanner",
-                            script: "sonar-scanner --version"
                         sh label: "Test trufflehog",
                             script: "trufflehog --help"
+                        sh label: "Test sonar-scanner",
+                            script: "sonar-scanner --version"
+                        sh label: "Test for outdated global npm packages",
+                            script: "npm outdated --global"
                     }
                 }
             }
@@ -74,6 +75,12 @@ pipeline {
                     sh "docker push $TOOLS_IMAGE"
                 }
             }
+        }
+    }
+
+    post {
+        always{
+            archiveArtifacts artifacts: "*-results.txt"
         }
     }
 }
